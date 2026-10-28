@@ -48,10 +48,10 @@ brew install whisper-cpp ffmpeg
 mkdir -p ~/whisper-models
 ```
 
-Затем скачиваем рекомендованную модель — **large-v3-turbo** (1,6 ГБ, хорошее качество для русского и быстрая):
+Затем скачиваем основную модель — **large-v3** (3 ГБ, лучшее качество для русского):
 
 ```bash
-curl -L -o ~/whisper-models/ggml-large-v3-turbo.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin
+curl -L -o ~/whisper-models/ggml-large-v3.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin
 ```
 
 ### Чем отличаются модели
@@ -61,16 +61,16 @@ curl -L -o ~/whisper-models/ggml-large-v3-turbo.bin https://huggingface.co/ggerg
 | tiny | 75 МБ | очень быстро | плохо | только проверить, что всё работает |
 | base | 142 МБ | очень быстро | слабо, много ошибок | черновик чистой речи |
 | small | 466 МБ | быстро | средне | старый или слабый Mac |
-| medium | 1,5 ГБ | средне | хорошо | если turbo ошибается на терминах |
-| **large-v3-turbo** | **1,6 ГБ** | **быстро** | **очень хорошо** | **основной вариант** |
-| large-v3 | 3 ГБ | медленно, в 3–5 раз дольше turbo | лучшее | важные записи, плохой звук, несколько собеседников |
+| medium | 1,5 ГБ | средне | хорошо | компромисс скорости и качества |
+| large-v3-turbo | 1,6 ГБ | быстро | очень хорошо | когда нужно быстрее и качество чуть ниже не критично |
+| **large-v3** | **3 ГБ** | **медленнее turbo в 3–5 раз** | **лучшее** | **основной вариант** |
 
 Модели с `.en` в названии понимают только английский — для русского их не берите.
 
-Скачать другую модель — та же команда, поменяйте название в двух местах. Например, large-v3:
+Скачать другую модель — та же команда, поменяйте название в двух местах. Например, быстрая large-v3-turbo:
 
 ```bash
-curl -L -o ~/whisper-models/ggml-large-v3.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin
+curl -L -o ~/whisper-models/ggml-large-v3-turbo.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin
 ```
 
 Посмотреть, какие модели уже скачаны:
@@ -86,7 +86,7 @@ ls -lh ~/whisper-models
 ```bash
 cat >> ~/.zshrc <<'EOF'
 transcribe() {
-  local model="${WHISPER_MODEL:-$HOME/whisper-models/ggml-large-v3-turbo.bin}"
+  local model="${WHISPER_MODEL:-$HOME/whisper-models/ggml-large-v3.bin}"
   local f base tmp
   [ -f "$model" ] || { echo "✖ Нет модели: $model — скачайте её (шаг 3)"; return 1; }
   for f in "$@"; do
@@ -122,7 +122,7 @@ transcribe /Users/имя/Downloads/встреча.mp4
 - `встреча.txt` — сплошной текст;
 - `встреча.srt` — текст с таймкодами (видно, на какой минуте что сказано; открывается любым текстовым редактором, подходит как субтитры к видео).
 
-Ориентир по времени на Mac с чипом M1 и новее с моделью turbo: часовая запись — порядка нескольких минут. С large-v3 — в несколько раз дольше.
+Ориентир по времени на Mac с чипом M1 и новее: часовая запись с моделью large-v3 — порядка 10–20 минут, с turbo — в несколько раз быстрее.
 
 ### Готовые шаблоны
 
@@ -154,10 +154,10 @@ transcribe ~/Desktop/Расшифровать/*.*
 WHISPER_LANG=en transcribe ФАЙЛ
 ```
 
-Важная запись — самая точная модель (сначала скачайте large-v3, шаг 3):
+Нужно быстрее — модель turbo (сначала скачайте её, шаг 3):
 
 ```bash
-WHISPER_MODEL=~/whisper-models/ggml-large-v3.bin transcribe ФАЙЛ
+WHISPER_MODEL=~/whisper-models/ggml-large-v3-turbo.bin transcribe ФАЙЛ
 ```
 
 Открыть получившийся текст:
@@ -173,9 +173,9 @@ open ~/Downloads/встреча.txt
 | `command not found: brew` | Не выполнена вторая команда из шага 1. Выполните её и закройте/откройте Терминал. |
 | `command not found: transcribe` | Закройте Терминал и откройте заново, или выполните `source ~/.zshrc`. |
 | Строка `▶` появилась, а `✔ Готово` — нет | Проверьте, что модель скачана: `ls -lh ~/whisper-models` — файл должен весить сотни мегабайт или гигабайты. Если 0 байт или его нет — повторите шаг 3. |
-| `✖ Нет модели` | Команда ищет модель large-v3-turbo. Скачайте её (шаг 3) или запускайте с той, что уже скачана: `WHISPER_MODEL=~/whisper-models/ggml-large-v3.bin transcribe ФАЙЛ`. |
+| `✖ Нет модели` | Команда ищет модель large-v3. Скачайте её (шаг 3) или запускайте с той, что уже скачана: `WHISPER_MODEL=~/whisper-models/ИМЯ.bin transcribe ФАЙЛ`. |
 | `No such file or directory` | В пути ошибка. Сотрите путь и перетащите файл мышкой ещё раз. |
-| Текст с ошибками | Возьмите large-v3 (шаблон выше). Сильно помогает и чистый звук без музыки и шума. |
+| Текст с ошибками | Сильно помогает чистый звук без музыки и шума. Если стоит turbo — вернитесь на large-v3. |
 | В тексте повторяется одна и та же фраза или «Продолжение следует…» | Так Whisper «додумывает» тишину в конце записи — просто удалите эти строки. |
 
 Ничего никуда не отправляется: и модели, и расшифровка работают только на этом Mac, поэтому подходит и для конфиденциальных записей.
