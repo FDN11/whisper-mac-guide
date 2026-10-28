@@ -88,12 +88,13 @@ cat >> ~/.zshrc <<'EOF'
 transcribe() {
   local model="${WHISPER_MODEL:-$HOME/whisper-models/ggml-large-v3-turbo.bin}"
   local f base tmp
+  [ -f "$model" ] || { echo "✖ Нет модели: $model — скачайте её (шаг 3)"; return 1; }
   for f in "$@"; do
     base="${f%.*}"; tmp="${TMPDIR:-/tmp}/whisper_$$.wav"
     echo "▶ $f"
     ffmpeg -loglevel error -y -i "$f" -ar 16000 -ac 1 -c:a pcm_s16le "$tmp" &&
     whisper-cli -m "$model" -l "${WHISPER_LANG:-ru}" -otxt -osrt -of "$base" "$tmp" >/dev/null 2>&1 &&
-    echo "✔ Готово: $base.txt"
+    echo "✔ Готово: $base.txt" || echo "✖ Не получилось расшифровать: $f"
     rm -f "$tmp"
   done
 }
@@ -172,6 +173,7 @@ open ~/Downloads/встреча.txt
 | `command not found: brew` | Не выполнена вторая команда из шага 1. Выполните её и закройте/откройте Терминал. |
 | `command not found: transcribe` | Закройте Терминал и откройте заново, или выполните `source ~/.zshrc`. |
 | Строка `▶` появилась, а `✔ Готово` — нет | Проверьте, что модель скачана: `ls -lh ~/whisper-models` — файл должен весить сотни мегабайт или гигабайты. Если 0 байт или его нет — повторите шаг 3. |
+| `✖ Нет модели` | Команда ищет модель large-v3-turbo. Скачайте её (шаг 3) или запускайте с той, что уже скачана: `WHISPER_MODEL=~/whisper-models/ggml-large-v3.bin transcribe ФАЙЛ`. |
 | `No such file or directory` | В пути ошибка. Сотрите путь и перетащите файл мышкой ещё раз. |
 | Текст с ошибками | Возьмите large-v3 (шаблон выше). Сильно помогает и чистый звук без музыки и шума. |
 | В тексте повторяется одна и та же фраза или «Продолжение следует…» | Так Whisper «додумывает» тишину в конце записи — просто удалите эти строки. |
